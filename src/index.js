@@ -1,41 +1,26 @@
 /**
  * KOL交易信号推送系统
- * 主程序入口
+ * 主程序入口 - 单次执行模式
  */
 
-const scheduleService = require('./schedule');
+const api = require('./api');
+const dataProcessor = require('./dataProcessor');
+const dingTalk = require('./dingTalk');
+const storage = require('./storage');
 const config = require('../config');
 
-class App {
-  constructor() {
-    this.isRunning = false;
-  }
-
-  /**
-   * 初始化应用
-   */
-  init() {
-    console.log('='.repeat(60));
-    console.log('KOL交易信号推送系统');
-    console.log('='.repeat(60));
-    
+/**
+ * 执行单次轮询任务
+ */
+async function runSinglePoll() {
+  console.log('='.repeat(60));
+  console.log('KOL交易信号推送系统 - 单次轮询');
+  console.log('='.repeat(60));
+  
+  try {
     // 检查配置
-    this.checkConfig();
-    
-    // 启动定时任务
-    this.start();
-    
-    // 监听进程终止信号
-    this.setupGracefulShutdown();
-  }
-
-  /**
-   * 检查配置
-   */
-  checkConfig() {
     if (!config.api.url) {
-      console.error('API URL未配置，请检查config.js文件');
-      process.exit(1);
+      throw new Error('API URL未配置');
     }
     
     if (!config.dingTalk.webhook) {
@@ -43,63 +28,74 @@ class App {
     }
     
     console.log('✅ 配置检查完成');
-  }
-
-  /**
-   * 启动应用
-   */
-  start() {
-    if (this.isRunning) {
-      console.log('应用已经在运行中');
+    
+    // 1. 获取API数据
+    console.log('🔍 正在获取KOL交易信号...');
+    const data = await api.fetchWithRetry();
+    console.log(`📥 获取到 ${data.messages.length} 条消息`);
+    
+    // 2. 提取有效信号
+    const validSignals = dataProcessor.extractSignals(data.messages || []);
+    console.log(`📋 提取到 ${validSignals.length} 个有效信号`);
+    
+    if (validSignals.length === 0) {
+      console.log('🔔 没有发现有效交易信号');
       return;
     }
     
-    scheduleService.start();
-    this.isRunning = true;
+    // 3. 读取已处理信号ID
+    const processedIds = new Set(storage.getProcessedIds());
     
-    console.log('✅ 应用已启动');
-    console.log(`📅 定时任务：每${config.schedule.interval}分钟执行一次`);
-    console.log('🔔 等待新的交易信号...');
+    // 4. 筛选新信号
+    const newSignals = dataProcessor.filterNewSignals(validSignals, processedIds);
+    console.log(`✨ 发现 ${newSignals.length} 个新信号`);
+    
+    if (newSignals.length === 0) {
+      console.log('🔔 所有信号都已处理过');
+      return;
+    }
+    
+    // 5. 推送新信号到钉钉
+    console.log('📤 开始推送信号到钉钉...');
+    let successCount = 0;
+    let failedCount = 0;
+    
+    for (const signal of newSignals) {
+      // 发送到钉钉
+      const success = await dingTalk.sendSignal(signal);
+      
+      if (success) {
+        successCount++;
+        // 标记为已处理
+        storage.addProcessedId(signal.id.toString());
+      } else {
+        failedCount++;
+      }
+      
+      // 避免发送频率过高
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    console.log(`📊 推送结果：成功 ${successCount} 个，失败 ${failedCount} 个`);
+    
+    // 6. 清理旧数据
+    storage.cleanupOldData();
+    
+    console.log('✅ 单次轮询任务完成');
     console.log('='.repeat(60));
-  }
-
-  /**
-   * 停止应用
-   */
-  stop() {
-    if (!this.isRunning) {
-      console.log('应用未在运行中');
-      return;
-    }
     
-    scheduleService.stop();
-    this.isRunning = false;
+    // 执行完成后退出进程
+    process.exit(0);
     
-    console.log('✅ 应用已停止');
-  }
-
-  /**
-   * 设置优雅退出
-   */
-  setupGracefulShutdown() {
-    // 监听Ctrl+C
-    process.on('SIGINT', () => {
-      console.log('\n收到终止信号，正在关闭应用...');
-      this.stop();
-      process.exit(0);
-    });
+  } catch (error) {
+    console.error('❌ 单次轮询任务失败:', error.message);
+    console.error(error.stack);
+    console.log('='.repeat(60));
     
-    // 监听kill信号
-    process.on('SIGTERM', () => {
-      console.log('\n收到终止信号，正在关闭应用...');
-      this.stop();
-      process.exit(0);
-    });
+    // 出错后退出进程
+    process.exit(1);
   }
 }
 
-// 初始化应用
-const app = new App();
-app.init();
-
-module.exports = app;
+// 执行单次轮询任务
+runSinglePoll();

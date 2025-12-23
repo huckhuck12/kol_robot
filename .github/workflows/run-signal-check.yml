@@ -1,0 +1,65 @@
+name: KOL交易信号检查与推送
+
+# 触发条件：
+# 1. 每5分钟执行一次
+# 2. 推送到master分支时执行
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  push:
+    branches:
+      - master
+
+jobs:
+  check-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. 设置Node.js环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      # 3. 安装依赖
+      - name: Install dependencies
+        run: npm install
+
+      # 4. 运行信号检查脚本
+      - name: Run signal check script
+        env:
+          # 添加环境变量（如果需要）
+          DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+        run: |
+          # 创建或更新配置文件
+          if [ ! -f config.js ]; then
+            echo "module.exports = {\n  api: {\n    url: 'http://kol.zhixing.icu/api/user/proxy/frontend-messages',\n    params: { type: 'all', limit: 100 },\n    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },\n    retry: { times: 3, delay: 1000 }\n  },\n  dingTalk: {\n    webhook: process.env.DINGTALK_WEBHOOK || '',\n    secret: process.env.DINGTALK_SECRET || ''\n  },\n  schedule: { interval: 5 },\n  storage: { filePath: './data/processedSignals.json', maxAge: 7 * 24 * 60 * 60 * 1000 }\n};" > config.js
+          fi
+          
+          # 运行信号检查
+          node src/index.js
+
+      # 5. 保存已处理信号（可选）
+      - name: Save processed signals
+        uses: actions/upload-artifact@v3
+        with:
+          name: processed-signals
+          path: data/processedSignals.json
+          retention-days: 7
+
+      # 6. 自动提交已处理信号（可选）
+      - name: Commit processed signals
+        if: always()
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add data/processedSignals.json
+          git commit -m "Update processed signals [skip ci]"
+          git push origin master
+        continue-on-error: true
