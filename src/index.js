@@ -1,6 +1,8 @@
 /**
  * KOL交易信号推送系统
- * 主程序入口 - 单次执行模式
+ * 主程序入口 - 支持两种运行模式
+ * 1. 单次执行模式：用于GitHub Actions短轮询
+ * 2. 本地持续轮询模式：用于本地运行
  */
 
 const api = require('./api');
@@ -84,18 +86,54 @@ async function runSinglePoll() {
     console.log('✅ 单次轮询任务完成');
     console.log('='.repeat(60));
     
-    // 执行完成后退出进程
-    process.exit(0);
-    
   } catch (error) {
     console.error('❌ 单次轮询任务失败:', error.message);
     console.error(error.stack);
     console.log('='.repeat(60));
-    
-    // 出错后退出进程
-    process.exit(1);
   }
 }
 
-// 执行单次轮询任务
-runSinglePoll();
+/**
+ * 本地持续轮询模式
+ */
+function startLocalPolling() {
+  console.log('='.repeat(60));
+  console.log('KOL交易信号推送系统 - 本地持续轮询模式');
+  console.log('='.repeat(60));
+  console.log(`🔄 轮询间隔：${config.schedule.interval}分钟`);
+  console.log('📅 首次执行：立即执行');
+  console.log('🔔 按 Ctrl+C 停止');
+  console.log('='.repeat(60));
+  
+  // 立即执行一次
+  runSinglePoll();
+  
+  // 设置定时任务，每config.schedule.interval分钟执行一次
+  const interval = config.schedule.interval * 60 * 1000;
+  const timer = setInterval(runSinglePoll, interval);
+  
+  // 监听退出信号
+  process.on('SIGINT', () => {
+    console.log('\n🔴 收到停止信号，正在停止轮询...');
+    clearInterval(timer);
+    console.log('✅ 轮询已停止，感谢使用！');
+    process.exit(0);
+  });
+}
+
+/**
+ * 主函数 - 根据命令行参数决定运行模式
+ */
+function main() {
+  // 检查运行模式
+  if (process.argv.includes('--single')) {
+    // 单次执行模式（用于GitHub Actions）
+    runSinglePoll();
+  } else {
+    // 本地持续轮询模式
+    startLocalPolling();
+  }
+}
+
+// 执行主函数
+main();

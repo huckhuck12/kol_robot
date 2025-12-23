@@ -42,8 +42,8 @@ jobs:
             echo "module.exports = {\n  api: {\n    url: 'http://kol.zhixing.icu/api/user/proxy/frontend-messages',\n    params: { type: 'all', limit: 100 },\n    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },\n    retry: { times: 3, delay: 1000 }\n  },\n  dingTalk: {\n    webhook: process.env.DINGTALK_WEBHOOK || '',\n    secret: process.env.DINGTALK_SECRET || ''\n  },\n  schedule: { interval: 5 },\n  storage: { filePath: './data/processedSignals.json', maxAge: 7 * 24 * 60 * 60 * 1000 }\n};" > config.js
           fi
           
-          # 运行信号检查
-          node src/index.js
+          # 运行信号检查（单次执行模式）
+          node src/index.js --single
 
       # 5. 保存已处理信号（可选）
       - name: Save processed signals
