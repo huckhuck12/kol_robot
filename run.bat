@@ -1,40 +1,41 @@
 @echo off
 
 echo ========================================
-echo KOL交易信号推送系统 - 运行脚本
+echo KOL Trading Signal Push System
 echo ========================================
 echo.
 
-:: 检查Node.js是否安装
-node --version >nul 2>&1
+:: Check if Node.js is installed
+where node >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo 错误: 未检测到Node.js，请先安装Node.js
-    echo 下载地址: https://nodejs.org/
+    echo ERROR: Node.js not found!
+    echo Please install Node.js first.
+    echo Download: https://nodejs.org/
     pause
     exit /b 1
 )
 
-echo 已检测到Node.js
+echo Node.js detected.
 
-:: 检查是否已安装依赖
+:: Check if dependencies are installed
 if not exist node_modules (
-    echo 正在安装依赖...
-    npm install
+    echo Installing dependencies...
+    call npm install
     if %ERRORLEVEL% NEQ 0 (
-        echo 错误: 依赖安装失败
+        echo ERROR: Failed to install dependencies.
         pause
         exit /b 1
     )
-    echo 依赖安装完成
+    echo Dependencies installed.
 )
 
-echo 正在启动系统...
+echo Starting system...
 echo ========================================
-echo 系统将在后台运行，按 Ctrl+C 停止
+echo System is running. Press Ctrl+C to stop.
 echo ========================================
 echo.
 
-:: 启动应用
+:: Start the application
 node src/index.js
 
 pause
