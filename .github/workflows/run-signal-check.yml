@@ -10,6 +10,10 @@ on:
     branches:
       - master
 
+# 设置权限，允许写入内容
+permissions:
+  contents: write
+
 jobs:
   check-and-push:
     runs-on: ubuntu-latest
