@@ -50,22 +50,20 @@ async function runSinglePoll() {
       return;
     }
     
-    let newSignals = [];
+    // 统一的10分钟时间筛选：忽略10分钟前的交易信号
+    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+    let newSignals = validSignals.filter(signal => {
+      const signalTime = typeof signal.timestamp === 'number' ? signal.timestamp : parseInt(signal.timestamp);
+      // 将timestamp转换为毫秒级
+      const signalMs = signalTime > 1e12 ? signalTime : signalTime * 1000;
+      return signalMs > tenMinutesAgo;
+    });
     
-    // 根据运行模式选择不同的新信号筛选策略
-    if (process.argv.includes('--single')) {
-      // GitHub Actions模式：基于时间筛选新信号（只处理最近10分钟内的信号）
-      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-      newSignals = validSignals.filter(signal => {
-        const signalTime = typeof signal.timestamp === 'number' ? signal.timestamp : parseInt(signal.timestamp);
-        // 将timestamp转换为毫秒级
-        const signalMs = signalTime > 1e12 ? signalTime : signalTime * 1000;
-        return signalMs > tenMinutesAgo;
-      });
-    } else {
+    // 再根据运行模式进行额外筛选
+    if (!process.argv.includes('--single')) {
       // 本地模式：使用storage模块跟踪已处理信号
       const processedIds = new Set(storage.getProcessedIds());
-      newSignals = validSignals.filter(signal => !processedIds.has(signal.id.toString()));
+      newSignals = newSignals.filter(signal => !processedIds.has(signal.id.toString()));
     }
     
     console.log(`✨ 发现 ${newSignals.length} 个新信号`);
