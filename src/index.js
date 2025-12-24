@@ -63,8 +63,11 @@ async function runSinglePoll() {
     let failedCount = 0;
     
     for (const signal of newSignals) {
+      // 格式化信号用于推送（包括时间转换）
+      const formattedSignal = dataProcessor.formatSignalForPush(signal);
+      
       // 发送到钉钉
-      const success = await dingTalk.sendSignal(signal);
+      const success = await dingTalk.sendSignal(formattedSignal);
       
       if (success) {
         successCount++;

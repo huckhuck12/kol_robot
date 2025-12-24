@@ -114,6 +114,38 @@ function filterNewSignals(signals, processedIds) {
  * @returns {Object} 格式化后的信号
  */
 function formatSignalForPush(signal) {
+  // 处理时间显示问题，始终从timestamp生成正确时间
+  let timestamp;
+  if (signal.timestamp) {
+    // 确保timestamp是数字类型
+    const rawTimestamp = typeof signal.timestamp === 'string' ? parseInt(signal.timestamp) : signal.timestamp;
+    
+    // 根据数值大小判断是秒级还是毫秒级
+    // 1e12是一个阈值，超过则认为是毫秒级
+    if (rawTimestamp > 1e12) {
+      timestamp = rawTimestamp;
+    } else if (rawTimestamp > 0) {
+      timestamp = rawTimestamp * 1000;
+    } else {
+      // 无效的timestamp，使用当前时间
+      timestamp = Date.now();
+    }
+  } else {
+    // 如果没有timestamp，使用当前时间
+    timestamp = Date.now();
+  }
+  
+  // 将UTC时间转换为北京时间
+  const messageTime = new Date(timestamp).toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  
   return {
     id: signal.id,
     title: `【${signal.author}】${signal.symbol} 交易信号`,
@@ -125,7 +157,7 @@ function formatSignalForPush(signal) {
     targetPrice: signal.targetPrice,
     leverage: signal.leverage,
     analysis: signal.analysis,
-    messageTime: signal.messageTime,
+    messageTime: messageTime,
     channel: signal.channel
   };
 }

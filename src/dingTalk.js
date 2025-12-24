@@ -45,18 +45,21 @@ class DingTalkService {
     return {
       msgtype: 'markdown',
       markdown: {
-        title: `${signal.author} 发布了新的交易信号`,
-        text: `## 📊 KOL交易信号\n\n` +
-              `### 👤 KOL：${signal.author}\n` +
-              `### 📈 交易对：${signal.symbol || '未指定'}\n` +
-              `### ➡️ 方向：${signal.direction || '未指定'}\n` +
-              `### 🎯 入场价：${signal.entryPrice || '市价'}\n` +
-              `### 🛑 止损：${signal.stopLoss || '未设置'}\n` +
-              `### 🎯 目标价：${signal.targetPrice || '未设置'}\n` +
-              `### 🔢 杠杆：${signal.leverage || '未建议'}\n\n` +
-              `### 💡 分析理由：\n${signal.analysis || '无'}\n\n` +
-              `### ⏰ 时间：${signal.messageTime}\n\n` +
-              `### 📢 频道：${signal.channel}\n\n` +
+        title: `${signal.author} - ${signal.symbol}`,
+        text: `# 📊 KOL交易信号推送\n\n` +
+              `## ${signal.author} 发布了新的交易信号\n\n` +
+              `| **项目** | **详情** |\n` +
+              `|----------|----------|\n` +
+              `| 📈 交易对 | ${signal.symbol || '未指定'} |\n` +
+              `| ➡️ 方向 | ${signal.direction || '未指定'} |\n` +
+              `| 🎯 入场价 | ${signal.entryPrice || '市价'} |\n` +
+              `| 🛑 止损 | ${signal.stopLoss || '未设置'} |\n` +
+              `| 🎯 目标价 | ${signal.targetPrice || '未设置'} |\n` +
+              `| 🔢 杠杆 | ${signal.leverage || '未建议'} |\n` +
+              `| 📢 频道 | ${signal.channel} |\n` +
+              `| ⏰ 时间 | ${signal.messageTime} |\n\n` +
+              `## 💡 分析理由\n\n` +
+              `${signal.analysis || '无'}\n\n` +
               `---\n` +
               `*消息来自KOL交易信号推送系统*`
       }
