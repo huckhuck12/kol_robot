@@ -48,27 +48,24 @@ class DingTalkService {
     // 添加原始消息内容（包括图片）
     const messageContentSection = signal.messageContent ? `## 📝 原始消息内容\n\n${signal.messageContent}\n\n` : '';
     
-    // 使用更适合手机显示的列表格式替代表格
+    // 使用极简的Markdown格式，确保在DingTalk移动端正确显示
     return {
       msgtype: 'markdown',
       markdown: {
         title: `${signal.author} - ${signal.symbol}`,
-        text: `# 📊 KOL交易信号推送\n\n` +
-              `## ${signal.author} 发布了新的交易信号\n\n` +
-              `📈 **交易对**: ${signal.symbol || '未指定'}\n` +
-              `➡️ **方向**: ${signal.direction || '未指定'}\n` +
-              `🎯 **入场价**: ${signal.entryPrice || '市价'}\n` +
-              `🛑 **止损**: ${signal.stopLoss || '未设置'}\n` +
-              `🎯 **目标价**: ${signal.targetPrice || '未设置'}\n` +
-              `🔢 **杠杆**: ${signal.leverage || '未建议'}\n` +
-              `📢 **频道**: ${signal.channel}\n` +
-              `⏰ **时间**: ${signal.messageTime}\n\n` +
-              `${messageContentSection}` +
-              `## 💡 分析理由\n\n` +
-              `${signal.analysis || '无'}\n\n` +
-              `${originalLinkSection}` +
-              `---\n` +
-              `*消息来自KOL交易信号推送系统*`
+        text: `📊 KOL交易信号\n\n` +
+              `👤 ${signal.author}\n` +
+              `📈 交易对: ${signal.symbol || '未指定'}\n` +
+              `➡️ 方向: ${signal.direction || '未指定'}\n` +
+              `🎯 入场价: ${signal.entryPrice || '市价'}\n` +
+              `🛑 止损: ${signal.stopLoss || '未设置'}\n` +
+              `🎯 目标价: ${signal.targetPrice || '未设置'}\n` +
+              `🔢 杠杆: ${signal.leverage || '未建议'}\n` +
+              `📢 频道: ${signal.channel}\n` +
+              `⏰ 时间: ${signal.messageTime}\n\n` +
+              `💡 分析理由:\n${signal.analysis || '无'}\n\n` +
+              `${originalLinkSection || ''}` +
+              `📝 原始消息内容:\n${signal.messageContent || '无'}`
       }
     };
   }
