@@ -45,27 +45,27 @@ class DingTalkService {
     // 添加原始链接（如果有）
     const originalLinkSection = signal.originalLink ? `## 🔗 原始链接\n\n[点击查看原始消息](${signal.originalLink})\n\n` : '';
     
-    // 添加原始消息内容（包括图片）
-    const messageContentSection = signal.messageContent ? `## 📝 原始消息内容\n\n${signal.messageContent}\n\n` : '';
-    
-    // 使用极简的Markdown格式，确保在DingTalk移动端正确显示
+    // 使用兼容DingTalk移动端的简单表格格式
+    // 注意：DingTalk移动端只支持简单的表格结构
     return {
       msgtype: 'markdown',
       markdown: {
         title: `${signal.author} - ${signal.symbol}`,
-        text: `📊 KOL交易信号\n\n` +
-              `👤 ${signal.author}\n` +
-              `📈 交易对: ${signal.symbol || '未指定'}\n` +
-              `➡️ 方向: ${signal.direction || '未指定'}\n` +
-              `🎯 入场价: ${signal.entryPrice || '市价'}\n` +
-              `🛑 止损: ${signal.stopLoss || '未设置'}\n` +
-              `🎯 目标价: ${signal.targetPrice || '未设置'}\n` +
-              `🔢 杠杆: ${signal.leverage || '未建议'}\n` +
-              `📢 频道: ${signal.channel}\n` +
-              `⏰ 时间: ${signal.messageTime}\n\n` +
-              `💡 分析理由:\n${signal.analysis || '无'}\n\n` +
+        text: `# 📊 KOL交易信号\n\n` +
+              `## ${signal.author}\n\n` +
+              `| 项目 | 详情 |\n` +
+              `|------|------|\n` +
+              `| 交易对 | ${signal.symbol || '未指定'} |\n` +
+              `| 方向 | ${signal.direction || '未指定'} |\n` +
+              `| 入场价 | ${signal.entryPrice || '市价'} |\n` +
+              `| 止损 | ${signal.stopLoss || '未设置'} |\n` +
+              `| 目标价 | ${signal.targetPrice || '未设置'} |\n` +
+              `| 杠杆 | ${signal.leverage || '未建议'} |\n` +
+              `| 频道 | ${signal.channel} |\n` +
+              `| 时间 | ${signal.messageTime} |\n\n` +
+              `## 💡 分析理由\n${signal.analysis || '无'}\n\n` +
               `${originalLinkSection || ''}` +
-              `📝 原始消息内容:\n${signal.messageContent || '无'}`
+              `## 📝 原始消息\n${signal.messageContent || '无'}`
       }
     };
   }
