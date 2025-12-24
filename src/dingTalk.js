@@ -41,28 +41,49 @@ class DingTalkService {
    * @param {Object} signal 交易信号
    * @returns {Object} Markdown消息格式
    */
+  /**
+ * 格式化交易信号为【移动端友好】的纯文本消息
+ */
   formatMessage(signal) {
-    // 构建适合移动端显示的简洁Markdown消息，确保每条信息独占一行
-    const markdownText = `📊 **KOL交易信号**\n` +
-                        `👤 **作者**: ${signal.author || '未知作者'}\n` +
-                        `📈 **交易对**: ${signal.symbol || '未知币种'}\n` +
-                        `➡️ **方向**: ${signal.direction || '未知方向'}\n` +
-                        `🎯 **入场价**: ${signal.entryPrice || '市价'}\n` +
-                        `🛑 **止损**: ${signal.stopLoss || '未设置'}\n` +
-                        `🎯 **目标价**: ${signal.targetPrice || '未设置'}\n` +
-                        `🔢 **杠杆**: ${signal.leverage || '未建议'}\n` +
-                        `📢 **频道**: ${signal.channel || '未知频道'}\n` +
-                        `⏰ **时间**: ${signal.messageTime || new Date().toLocaleString('zh-CN')}\n` +
-                        `💡 **分析理由**: ${signal.analysis || '无'}\n` +
-                        `${signal.originalLink ? `🔗 **原始链接**: [点击查看](${signal.originalLink})\n` : ''}` +
-                        `${signal.messageContent ? `📝 **原始消息**: ${signal.messageContent}\n` : ''}` +
-                        `\n*消息来自KOL交易信号推送系统*`;
-    
+    const lines = [];
+
+    lines.push('【📢 KOL 交易信号】');
+    lines.push('');
+
+    lines.push(`👤 作者：${signal.author || '未知'}`);
+    lines.push(`📈 交易对：${signal.symbol || '未知'}`);
+    lines.push(`➡️ 方向：${signal.direction || '未知'}`);
+    lines.push(`🎯 入场：${signal.entryPrice || '市价'}`);
+    lines.push(`🛑 止损：${signal.stopLoss || '未设置'}`);
+    lines.push(`🎯 目标：${signal.targetPrice || '未设置'}`);
+    lines.push(`🔢 杠杆：${signal.leverage || '未建议'}`);
+    lines.push(`📢 频道：${signal.channel || '未知'}`);
+    lines.push(`⏰ 时间：${signal.messageTime || new Date().toLocaleString('zh-CN')}`);
+
+    if (signal.analysis) {
+      lines.push('');
+      lines.push(`💡 分析：${signal.analysis}`);
+    }
+
+    if (signal.originalLink) {
+      lines.push('');
+      lines.push(`🔗 原文：${signal.originalLink}`);
+    }
+
+    if (signal.messageContent) {
+      lines.push('');
+      lines.push('📝 原始消息：');
+      lines.push(signal.messageContent);
+    }
+
+    lines.push('');
+    lines.push('——');
+    lines.push('来自 KOL 信号推送系统');
+
     return {
-      msgtype: 'markdown',
-      markdown: {
-        title: `${signal.author || '未知作者'} - ${signal.symbol || '未知币种'}`,
-        text: markdownText
+      msgtype: 'text',
+      text: {
+        content: lines.join('\n')
       }
     };
   }
