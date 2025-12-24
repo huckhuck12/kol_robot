@@ -1,11 +1,11 @@
 name: KOL交易信号检查与推送
 
 # 触发条件：
-# 1. 每5分钟执行一次
+# 1. 已暂停自动轮询
 # 2. 推送到master分支时执行
 on:
-  schedule:
-    - cron: '*/3 * * * *'
+  # schedule:
+  #   - cron: '*/3 * * * *'
   push:
     branches:
       - master
