@@ -45,6 +45,9 @@ class DingTalkService {
     // 添加原始链接（如果有）
     const originalLinkSection = signal.originalLink ? `## 🔗 原始链接\n\n[点击查看原始消息](${signal.originalLink})\n\n` : '';
     
+    // 添加原始消息内容（包括图片）
+    const messageContentSection = signal.messageContent ? `## 📝 原始消息内容\n\n${signal.messageContent}\n\n` : '';
+    
     return {
       msgtype: 'markdown',
       markdown: {
@@ -61,6 +64,7 @@ class DingTalkService {
               `| 🔢 杠杆 | ${signal.leverage || '未建议'} |\n` +
               `| 📢 频道 | ${signal.channel} |\n` +
               `| ⏰ 时间 | ${signal.messageTime} |\n\n` +
+              `${messageContentSection}` +
               `## 💡 分析理由\n\n` +
               `${signal.analysis || '无'}\n\n` +
               `${originalLinkSection}` +

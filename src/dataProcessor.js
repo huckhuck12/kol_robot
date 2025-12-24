@@ -12,9 +12,9 @@ function extractSignals(messages) {
   const validSignals = [];
 
   messages.forEach(message => {
-    // 检查是否包含交易信号
-    if (message.signal && message.signal.trim() !== '') {
-      try {
+    try {
+      // 处理有signal字段的消息
+      if (message.signal && message.signal.trim() !== '') {
         const signal = parseSignal(message);
         if (signal) {
           // 构建原始链接（基于平台和消息ID）
@@ -23,6 +23,8 @@ function extractSignals(messages) {
             // 基于不同平台构建合理的链接格式
             if (message.platform === 'discord') {
               originalLink = `https://discord.com/channels/${message.guild_id}/${message.channel_id}/${message.message_id}`;
+            } else if (message.platform === 'kook') {
+              originalLink = `https://www.kookapp.cn/app/channels/${message.channel_id}/messages/${message.message_id}`;
             } else {
               // 默认格式
               originalLink = `${message.platform}://channel/${message.channel_id}/message/${message.message_id}`;
@@ -38,12 +40,52 @@ function extractSignals(messages) {
             messageTime: message.message_time,
             timestamp: message.timestamp,
             originalLink: originalLink,
+            messageContent: message.message_content, // 添加原始消息内容
             ...signal
           });
         }
-      } catch (error) {
-        console.error('解析信号失败:', error.message, '消息ID:', message.id);
+      } 
+      // 处理包含图片或其他内容的消息（即使signal为空）
+      else if (message.message_content && message.message_content.trim() !== '') {
+        // 构建原始链接
+        let originalLink = '';
+        if (message.platform && message.channel_id && message.message_id) {
+          if (message.platform === 'kook') {
+            originalLink = `https://www.kookapp.cn/app/channels/${message.channel_id}/messages/${message.message_id}`;
+          } else if (message.platform === 'discord') {
+            originalLink = `https://discord.com/channels/${message.guild_id}/${message.channel_id}/${message.message_id}`;
+          } else {
+            originalLink = `${message.platform}://channel/${message.channel_id}/message/${message.message_id}`;
+          }
+        }
+        
+        // 尝试从message_content中提取交易对
+        const content = message.message_content;
+        const symbolMatch = content.match(/\$([A-Z0-9]+)\//i) || content.match(/\$([A-Z0-9]+)/i);
+        const symbol = symbolMatch ? symbolMatch[1].trim().toUpperCase() : '未知币种';
+        
+        validSignals.push({
+          id: message.id,
+          author: message.author_nickname,
+          authorAvatar: message.author_avatar,
+          platform: message.platform,
+          channel: message.channel_name,
+          messageTime: message.message_time,
+          timestamp: message.timestamp,
+          originalLink: originalLink,
+          messageContent: content, // 包含原始消息内容（图片等）
+          symbol: symbol,
+          direction: '未知方向',
+          entryPrice: '未知',
+          stopLoss: '未知',
+          targetPrice: '未知',
+          leverage: '未知',
+          analysis: message.analysis || '无',
+          originalContent: content
+        });
       }
+    } catch (error) {
+      console.error('解析信号失败:', error.message, '消息ID:', message.id);
     }
   });
 
@@ -172,7 +214,8 @@ function formatSignalForPush(signal) {
     analysis: signal.analysis,
     messageTime: messageTime,
     channel: signal.channel,
-    originalLink: signal.originalLink || ''
+    originalLink: signal.originalLink || '',
+    messageContent: signal.messageContent || ''
   };
 }
 
