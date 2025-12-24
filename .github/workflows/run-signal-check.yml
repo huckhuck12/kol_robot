@@ -5,7 +5,7 @@ name: KOL交易信号检查与推送
 # 2. 推送到master分支时执行
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/3 * * * *'
   push:
     branches:
       - master
@@ -49,21 +49,10 @@ jobs:
           # 运行信号检查（单次执行模式）
           node src/index.js --single
 
-      # 5. 保存已处理信号（可选）
-      - name: Save processed signals
+      # 5. 保存已处理信号作为artifact（可选，用于调试）
+      - name: Save processed signals for debugging
         uses: actions/upload-artifact@v4
         with:
-          name: processed-signals
+          name: processed-signals-debug
           path: data/processedSignals.json
-          retention-days: 7
-
-      # 6. 自动提交已处理信号（可选）
-      - name: Commit processed signals
-        if: always()
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add data/processedSignals.json
-          git commit -m "Update processed signals [skip ci]"
-          git push origin master
-        continue-on-error: true
+          retention-days: 3

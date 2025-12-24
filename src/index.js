@@ -8,8 +8,13 @@
 const api = require('./api');
 const dataProcessor = require('./dataProcessor');
 const dingTalk = require('./dingTalk');
-const storage = require('./storage');
 const config = require('../config');
+
+// 本地持续轮询模式下才需要storage模块
+let storage;
+if (!process.argv.includes('--single')) {
+  storage = require('./storage');
+}
 
 /**
  * 执行单次轮询任务
@@ -45,11 +50,24 @@ async function runSinglePoll() {
       return;
     }
     
-    // 3. 读取已处理信号ID
-    const processedIds = new Set(storage.getProcessedIds());
+    let newSignals = [];
     
-    // 4. 筛选新信号
-    const newSignals = dataProcessor.filterNewSignals(validSignals, processedIds);
+    // 根据运行模式选择不同的新信号筛选策略
+    if (process.argv.includes('--single')) {
+      // GitHub Actions模式：基于时间筛选新信号（只处理最近10分钟内的信号）
+      const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
+      newSignals = validSignals.filter(signal => {
+        const signalTime = typeof signal.timestamp === 'number' ? signal.timestamp : parseInt(signal.timestamp);
+        // 将timestamp转换为毫秒级
+        const signalMs = signalTime > 1e12 ? signalTime : signalTime * 1000;
+        return signalMs > tenMinutesAgo;
+      });
+    } else {
+      // 本地模式：使用storage模块跟踪已处理信号
+      const processedIds = new Set(storage.getProcessedIds());
+      newSignals = validSignals.filter(signal => !processedIds.has(signal.id.toString()));
+    }
+    
     console.log(`✨ 发现 ${newSignals.length} 个新信号`);
     
     if (newSignals.length === 0) {
@@ -71,8 +89,10 @@ async function runSinglePoll() {
       
       if (success) {
         successCount++;
-        // 标记为已处理
-        storage.addProcessedId(signal.id.toString());
+        // 本地模式下标记为已处理
+        if (storage) {
+          storage.addProcessedId(signal.id.toString());
+        }
       } else {
         failedCount++;
       }
@@ -83,8 +103,10 @@ async function runSinglePoll() {
     
     console.log(`📊 推送结果：成功 ${successCount} 个，失败 ${failedCount} 个`);
     
-    // 6. 清理旧数据
-    storage.cleanupOldData();
+    // 6. 本地模式下清理旧数据
+    if (storage) {
+      storage.cleanupOldData();
+    }
     
     console.log('✅ 单次轮询任务完成');
     console.log('='.repeat(60));
