@@ -17,6 +17,18 @@ function extractSignals(messages) {
       try {
         const signal = parseSignal(message);
         if (signal) {
+          // 构建原始链接（基于平台和消息ID）
+          let originalLink = '';
+          if (message.platform && message.channel_id && message.message_id) {
+            // 基于不同平台构建合理的链接格式
+            if (message.platform === 'discord') {
+              originalLink = `https://discord.com/channels/${message.guild_id}/${message.channel_id}/${message.message_id}`;
+            } else {
+              // 默认格式
+              originalLink = `${message.platform}://channel/${message.channel_id}/message/${message.message_id}`;
+            }
+          }
+          
           validSignals.push({
             id: message.id,
             author: message.author_nickname,
@@ -25,6 +37,7 @@ function extractSignals(messages) {
             channel: message.channel_name,
             messageTime: message.message_time,
             timestamp: message.timestamp,
+            originalLink: originalLink,
             ...signal
           });
         }
@@ -158,7 +171,8 @@ function formatSignalForPush(signal) {
     leverage: signal.leverage,
     analysis: signal.analysis,
     messageTime: messageTime,
-    channel: signal.channel
+    channel: signal.channel,
+    originalLink: signal.originalLink || ''
   };
 }
 

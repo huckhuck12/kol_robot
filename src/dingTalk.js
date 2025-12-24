@@ -42,6 +42,9 @@ class DingTalkService {
    * @returns {Object} Markdown消息格式
    */
   formatMessage(signal) {
+    // 添加原始链接（如果有）
+    const originalLinkSection = signal.originalLink ? `## 🔗 原始链接\n\n[点击查看原始消息](${signal.originalLink})\n\n` : '';
+    
     return {
       msgtype: 'markdown',
       markdown: {
@@ -60,6 +63,7 @@ class DingTalkService {
               `| ⏰ 时间 | ${signal.messageTime} |\n\n` +
               `## 💡 分析理由\n\n` +
               `${signal.analysis || '无'}\n\n` +
+              `${originalLinkSection}` +
               `---\n` +
               `*消息来自KOL交易信号推送系统*`
       }
