@@ -105,3 +105,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# 本地数据文件
+data/processedSignals.json
