@@ -37,35 +37,32 @@ class DingTalkService {
   }
 
   /**
-   * 格式化交易信号为Markdown消息
+   * 格式化交易信号为适合移动端显示的简洁Markdown消息
    * @param {Object} signal 交易信号
    * @returns {Object} Markdown消息格式
    */
   formatMessage(signal) {
-    // 添加原始链接（如果有）
-    const originalLinkSection = signal.originalLink ? `## 🔗 原始链接\n\n[点击查看原始消息](${signal.originalLink})\n\n` : '';
+    // 构建适合移动端显示的简洁Markdown消息，确保每条信息独占一行
+    const markdownText = `📊 **KOL交易信号**\n` +
+                        `👤 **作者**: ${signal.author || '未知作者'}\n` +
+                        `📈 **交易对**: ${signal.symbol || '未知币种'}\n` +
+                        `➡️ **方向**: ${signal.direction || '未知方向'}\n` +
+                        `🎯 **入场价**: ${signal.entryPrice || '市价'}\n` +
+                        `🛑 **止损**: ${signal.stopLoss || '未设置'}\n` +
+                        `🎯 **目标价**: ${signal.targetPrice || '未设置'}\n` +
+                        `🔢 **杠杆**: ${signal.leverage || '未建议'}\n` +
+                        `📢 **频道**: ${signal.channel || '未知频道'}\n` +
+                        `⏰ **时间**: ${signal.messageTime || new Date().toLocaleString('zh-CN')}\n` +
+                        `💡 **分析理由**: ${signal.analysis || '无'}\n` +
+                        `${signal.originalLink ? `🔗 **原始链接**: [点击查看](${signal.originalLink})\n` : ''}` +
+                        `${signal.messageContent ? `📝 **原始消息**: ${signal.messageContent}\n` : ''}` +
+                        `\n*消息来自KOL交易信号推送系统*`;
     
-    // 使用兼容DingTalk移动端的简单表格格式
-    // 注意：DingTalk移动端只支持简单的表格结构
     return {
       msgtype: 'markdown',
       markdown: {
-        title: `${signal.author} - ${signal.symbol}`,
-        text: `# 📊 KOL交易信号\n\n` +
-              `## ${signal.author}\n\n` +
-              `| 项目 | 详情 |\n` +
-              `|------|------|\n` +
-              `| 交易对 | ${signal.symbol || '未指定'} |\n` +
-              `| 方向 | ${signal.direction || '未指定'} |\n` +
-              `| 入场价 | ${signal.entryPrice || '市价'} |\n` +
-              `| 止损 | ${signal.stopLoss || '未设置'} |\n` +
-              `| 目标价 | ${signal.targetPrice || '未设置'} |\n` +
-              `| 杠杆 | ${signal.leverage || '未建议'} |\n` +
-              `| 频道 | ${signal.channel} |\n` +
-              `| 时间 | ${signal.messageTime} |\n\n` +
-              `## 💡 分析理由\n${signal.analysis || '无'}\n\n` +
-              `${originalLinkSection || ''}` +
-              `## 📝 原始消息\n${signal.messageContent || '无'}`
+        title: `${signal.author || '未知作者'} - ${signal.symbol || '未知币种'}`,
+        text: markdownText
       }
     };
   }
@@ -82,10 +79,12 @@ class DingTalkService {
     }
 
     try {
-      const message = this.formatMessage(signal);
       const webhookUrl = this.buildWebhookUrl();
       
-      // 使用axios直接发送请求，避免dingtalk-robot-sdk库的问题
+      // 格式化消息
+      const message = this.formatMessage(signal);
+      
+      // 发送Markdown消息
       const response = await axios.post(webhookUrl, message, {
         headers: {
           'Content-Type': 'application/json'
@@ -94,7 +93,7 @@ class DingTalkService {
       
       // 检查响应结果
       if (response.data && response.data.errcode === 0) {
-        console.log(`✅ 钉钉推送成功：${signal.author} - ${signal.symbol}`);
+        console.log(`✅ 钉钉推送成功：${signal.author || '未知作者'} - ${signal.symbol || '未知币种'}`);
         return true;
       } else {
         console.error(`❌ 钉钉推送失败，错误码：${response.data.errcode}，错误信息：${response.data.errmsg}`);
