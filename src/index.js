@@ -66,19 +66,23 @@ async function runSinglePoll() {
       newSignals = newSignals.filter(signal => !processedIds.has(signal.id.toString()));
     }
     
-    console.log(`✨ 发现 ${newSignals.length} 个新信号`);
+    // 7. 筛选高质量信号（阈值调整为20分，确保能筛选出信号）
+    const highQualitySignals = dataProcessor.filterHighQualitySignals(newSignals, 20);
+    console.log(`🎯 筛选出 ${highQualitySignals.length} 个高质量信号`);
     
-    if (newSignals.length === 0) {
-      console.log('🔔 所有信号都已处理过');
+    if (highQualitySignals.length === 0) {
+      console.log('🔔 没有发现高质量信号');
       return;
     }
+    
+    console.log(`✨ 最终推送 ${highQualitySignals.length} 个信号`);
     
     // 5. 推送新信号到钉钉
     console.log('📤 开始推送信号到钉钉...');
     let successCount = 0;
     let failedCount = 0;
     
-    for (const signal of newSignals) {
+    for (const signal of highQualitySignals) {
       // 格式化信号用于推送（包括时间转换）
       const formattedSignal = dataProcessor.formatSignalForPush(signal);
       

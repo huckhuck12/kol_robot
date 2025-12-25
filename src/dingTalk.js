@@ -57,6 +57,7 @@ class DingTalkService {
     lines.push(`🛑 止损：${signal.stopLoss || '未设置'}`);
     lines.push(`🎯 目标：${signal.targetPrice || '未设置'}`);
     lines.push(`🔢 杠杆：${signal.leverage || '未建议'}`);
+    lines.push(`⭐ 质量：${signal.quality || 0}分 (${signal.qualityLevel || '未知'})`);
     lines.push(`📢 频道：${signal.channel || '未知'}`);
     lines.push(`⏰ 时间：${signal.messageTime || new Date().toLocaleString('zh-CN')}`);
 

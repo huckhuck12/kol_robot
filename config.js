@@ -26,7 +26,7 @@ module.exports = {
 
   // 定时任务配置（单位：分钟）
   schedule: {
-    interval: 5
+    interval: 1
   },
 
   // 本地存储配置
