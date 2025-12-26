@@ -69,7 +69,19 @@ async function runSinglePoll() {
       return;
     }
     
-    console.log(`✨ 最终推送 ${highQualitySignals.length} 个信号`);
+    // 8. 按时间从早到晚排序，从离现在最久的开始推送
+    highQualitySignals.sort((a, b) => {
+      // 获取时间戳
+      const aTime = typeof a.timestamp === 'number' ? a.timestamp : parseInt(a.timestamp);
+      const bTime = typeof b.timestamp === 'number' ? b.timestamp : parseInt(b.timestamp);
+      // 转换为毫秒级
+      const aMs = aTime > 1e12 ? aTime : aTime * 1000;
+      const bMs = bTime > 1e12 ? bTime : bTime * 1000;
+      // 从早到晚排序
+      return aMs - bMs;
+    });
+    
+    console.log(`✨ 最终推送 ${highQualitySignals.length} 个信号，按时间从早到晚排序`);
     
     // 5. 推送新信号到钉钉
     console.log('📤 开始推送信号到钉钉...');
