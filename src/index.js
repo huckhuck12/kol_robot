@@ -50,14 +50,8 @@ async function runSinglePoll() {
       return;
     }
     
-    // 统一的10分钟时间筛选：忽略10分钟前的交易信号
-    const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-    let newSignals = validSignals.filter(signal => {
-      const signalTime = typeof signal.timestamp === 'number' ? signal.timestamp : parseInt(signal.timestamp);
-      // 将timestamp转换为毫秒级
-      const signalMs = signalTime > 1e12 ? signalTime : signalTime * 1000;
-      return signalMs > tenMinutesAgo;
-    });
+    // 去掉10分钟限制，保留所有有效信号
+    let newSignals = validSignals;
     
     // 再根据运行模式进行额外筛选
     if (!process.argv.includes('--single')) {
