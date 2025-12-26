@@ -1,14 +1,14 @@
 name: KOL交易信号检查与推送
 
 # 触发条件：
-# 1. 已暂停自动轮询
-# 2. 推送到master分支时执行
+# 已暂停所有触发条件
 on:
   # schedule:
   #   - cron: '*/3 * * * *'
-  push:
-    branches:
-      - master
+  # push:
+  #   branches:
+  #     - master
+  workflow_dispatch:
 
 # 设置权限，允许写入内容
 permissions:

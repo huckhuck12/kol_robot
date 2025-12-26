@@ -60,17 +60,24 @@ async function runSinglePoll() {
       newSignals = newSignals.filter(signal => !processedIds.has(signal.id.toString()));
     }
     
-    // 7. 筛选高质量信号（阈值调整为20分，确保能筛选出信号）
-    const highQualitySignals = dataProcessor.filterHighQualitySignals(newSignals, 20);
-    console.log(`🎯 筛选出 ${highQualitySignals.length} 个高质量信号`);
+    // 7. 为所有信号添加质量评分，但不筛选
+    const allSignalsWithQuality = newSignals.map(signal => {
+      const quality = dataProcessor.evaluateSignalQuality(signal);
+      return {
+        ...signal,
+        quality: quality
+      };
+    });
     
-    if (highQualitySignals.length === 0) {
-      console.log('🔔 没有发现高质量信号');
+    console.log(`🎯 为 ${allSignalsWithQuality.length} 个信号添加了质量评分`);
+    
+    if (allSignalsWithQuality.length === 0) {
+      console.log('🔔 没有发现新信号');
       return;
     }
     
     // 8. 按时间从早到晚排序，从离现在最久的开始推送
-    highQualitySignals.sort((a, b) => {
+    allSignalsWithQuality.sort((a, b) => {
       // 获取时间戳
       const aTime = typeof a.timestamp === 'number' ? a.timestamp : parseInt(a.timestamp);
       const bTime = typeof b.timestamp === 'number' ? b.timestamp : parseInt(b.timestamp);
@@ -81,14 +88,14 @@ async function runSinglePoll() {
       return aMs - bMs;
     });
     
-    console.log(`✨ 最终推送 ${highQualitySignals.length} 个信号，按时间从早到晚排序`);
+    console.log(`✨ 最终推送 ${allSignalsWithQuality.length} 个信号，按时间从早到晚排序`);
     
     // 5. 推送新信号到钉钉
     console.log('📤 开始推送信号到钉钉...');
     let successCount = 0;
     let failedCount = 0;
     
-    for (const signal of highQualitySignals) {
+    for (const signal of allSignalsWithQuality) {
       // 格式化信号用于推送（包括时间转换）
       const formattedSignal = dataProcessor.formatSignalForPush(signal);
       
