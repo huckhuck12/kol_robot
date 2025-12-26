@@ -60,6 +60,18 @@ async function runSinglePoll() {
       newSignals = newSignals.filter(signal => !processedIds.has(signal.id.toString()));
     }
     
+    // 8. 只保留当天的信号
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    newSignals = newSignals.filter(signal => {
+      const signalTime = typeof signal.timestamp === 'number' ? signal.timestamp : parseInt(signal.timestamp);
+      const signalMs = signalTime > 1e12 ? signalTime : signalTime * 1000;
+      const signalDate = new Date(signalMs);
+      return signalDate >= todayStart;
+    });
+    
+    console.log(`📅 过滤后剩余 ${newSignals.length} 个当天信号`);
+    
     // 7. 为所有信号添加质量评分，但不筛选
     const allSignalsWithQuality = newSignals.map(signal => {
       const quality = dataProcessor.evaluateSignalQuality(signal);
